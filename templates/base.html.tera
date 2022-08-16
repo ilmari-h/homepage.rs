@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% block head %}
+    <link rel="stylesheet" href="/index.css" />
+    <title>{% block title %}{% endblock title %} - My Webpage</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% endblock head %}
+</head>
+<body>
+	<div class="navbar">
+		<a href="/"><h1><strong>ilmari</strong>.dev</h1></a>
+		<div>
+			<a href="/blog">Blog</a>
+			<a>Publications</a>
+			<a>GitHub</a>
+			<a>LinkedIn</a>
+		</div>
+	</div>
+    <div id="content">{% block content %}{% endblock content %}</div>
+    <div id="footer">
+        {% block footer %}
+        &copy; 2022 www.ilmari.dev
+        {% endblock footer %}
+    </div>
+</body>
+</html>

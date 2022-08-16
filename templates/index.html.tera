@@ -1,0 +1,51 @@
+{% extends "base" %}
+{% block title %}Index{% endblock title %}
+{% block head %}
+    {{ super() }}
+    <style type="text/css">
+        .important { color: #336699; }
+    </style>
+{% endblock head %}
+{% block content %}
+    <p>
+      Hi. I'm Salle, a software developer from Finland.<br>
+	  I like contributing to open source software 🧑‍💻, and building my own projects 🚧 . Currently however, I'm mainly occupied with studying for my Master's degree 🎓. Sometimes I still find the time to work on something interesting and I might write a <a href="/blog">blog post</a> about the topic.<br>
+	  My projects and other stuff are up on my <a href="www.todo.todo">GitHub</a>.
+    </p>
+	<p>
+		You can best reach me via email at <a href="mailto:salle@ilmari.dev">salle@ilmari.dev</a>.
+    </p>
+
+	<div class="break"></div>
+
+	<h1>recent projects:</h1>
+
+	<div class="project">
+		<h1>bettit.net</h1>
+		<p>Bettit (stands for better archives for Reddit) is an archival website for Reddit.</p>
+		<a href="https://bettit.net">bettit.net</a><br>
+		<a href="https://github.com/ilmari-h/bettit">Source</a>
+	</div>
+
+	<div class="project">
+		<h1>dlv-tui</h1>
+		<p>Debugger for Go programs with a terminal user interface. Frontend for the Delve debugger.</p>
+		<a href="https://github.com/ilmari-h/dlv-tui">Source</a>
+	</div>
+
+	<div class="break"></div>
+
+	<h1>latest posts:</h1>
+
+	{% for post in posts %}
+		<div class="post-preview">
+			<h1>{{ post.metadata.title }}</h1>
+			<a href="/blog/{{ post.id }}">
+				{{ post.content | safe }}
+				<div class="overlay"></div>
+				<div class="overlay-text"><h1>read article</h1></div>
+			</a>
+		</div>
+	{% endfor %}
+
+{% endblock content %}
