@@ -38,14 +38,7 @@
 	<h1>latest posts:</h1>
 
 	{% for post in posts %}
-		<div class="post-preview">
-			<h1>{{ post.metadata.title }}</h1>
-			<a href="/blog/{{ post.id }}">
-				{{ post.content | safe }}
-				<div class="overlay"></div>
-				<div class="overlay-text"><h1>read article</h1></div>
-			</a>
-		</div>
+		{% include "blog_post_listing" %}
 	{% endfor %}
 
 {% endblock content %}

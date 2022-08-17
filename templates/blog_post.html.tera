@@ -1,9 +1,17 @@
 {% extends "base" %}
+{% block head %}
+    {{ super() }}
+	<script src="/blog.js"></script>
+{% endblock head %}
 {% block title %}{{ post.metadata.title }}{% endblock title %}
 {% block content %}
 
 <h1>{{ post.metadata.title }}</h1>
 
+<div class="blog-post-content">
+
 {{ post.content | safe }}
+
+</div>
 
 {% endblock content %}

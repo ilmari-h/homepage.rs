@@ -137,3 +137,55 @@ p {
     }
   }
 }
+
+.blog-post-content {
+  pre,
+  code {
+    font-size: 1.1em;
+    border: 1px solid $subtle;
+  }
+  pre {
+    position: relative;
+    background-color: black !important;
+    line-height: 1.15em;
+    padding: 2px;
+    font-family: monospace;
+    overflow-x: auto;
+    &:hover {
+      .pre-copy-button {
+        opacity: 1;
+      }
+    }
+    .pre-copy-button {
+      opacity: 0.4;
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      &::after {
+        content: "copy";
+      }
+    }
+  }
+  code {
+    padding: 1px;
+    font-family: monospace;
+  }
+}
+.post-header-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  .post-date {
+    margin-left: 10px;
+    color: $paragraph;
+  }
+}
+.post-tag {
+  padding: 2px 6px;
+  font-size: 0.8em;
+  background: $accent-dim;
+  border-radius: 9px;
+}
+.post-break {
+  margin-bottom: 10px;
+}

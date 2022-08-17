@@ -37,11 +37,11 @@ pub fn render_blog_posts(path_src: &str, path_out: &str) -> io::Result<Vec<BlogP
 pub struct BlogPostMetadata {
     pub title: String,
     pub date_created: String,
-    pub date_edited: Option<String>,
     pub tags: Option<Vec<String>>,
+    pub date_edited: Option<String>,
 }
 
-#[derive(Debug)]
+#[derive(Debug,Serialize)]
 pub struct BlogPost {
     pub id: String,
     pub metadata: BlogPostMetadata,

@@ -1,4 +1,6 @@
 /target
 /blog
 /dist
-/static
+/static/*.css
+/static/*.map
+/static/*.html

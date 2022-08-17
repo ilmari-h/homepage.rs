@@ -35,6 +35,7 @@ pub fn index(top_posts: &State<Vec<BlogPost>>) -> Template {
             let mut post_html = String::new();
             post_html += &raw_html[0..500];
             post_html += "...";
+            println!("{:?}", v.metadata);
             posts.push(BlogPostView { id: v.id.clone(), content: post_html, metadata: v.metadata.clone() });
         } else {
             panic!("Error reading html file.");
@@ -50,10 +51,12 @@ pub fn index(top_posts: &State<Vec<BlogPost>>) -> Template {
 }
 
 #[get("/blog")]
-pub fn blog() -> Template {
+pub fn blog(top_posts: &State<Vec<BlogPost>>) -> Template {
+    let posts: Vec<&BlogPost> = top_posts.iter().collect();
     Template::render(
         "blog",
         context! {
+            posts
         },
     )
 }
@@ -61,7 +64,9 @@ pub fn blog() -> Template {
 #[get("/blog/<post_id>")]
 // TODO: handle errors
 pub fn blog_posts(post_id: &str, top_posts: &State<Vec<BlogPost>>) -> Template {
-    let f_post = top_posts.first().unwrap();
+    // TODO: trivially now fails on unhandled static files eg. svg
+    let f_post = top_posts.iter().find(|post| post.id == post_id ).unwrap();
+
     let content = read_post(&post_id.to_owned()).unwrap();
     let post = BlogPostView{
         id: String::from(post_id),

@@ -3,6 +3,9 @@
 {% block content %}
 	<p>Posts about various software development related topics.</p>
 	<p>Filter by tag:</p>
-	{% block tags %}{% endblock tags %}
+	{% for post in posts %}
+		{% include "blog_post_listing" %}
+		<div class="post-break"></div>
+	{% endfor %}
 
 {% endblock content %}

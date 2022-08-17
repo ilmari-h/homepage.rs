@@ -1,0 +1,22 @@
+<div class="post-preview">
+	{% block content %}
+	<a href="/blog/{{ post.id }}">
+		<div class="post-header-line">
+			<h1>{{ post.metadata.title }}</h1>
+			<div class="post-date">{{ post.metadata.date_created }}</div>
+		</div>
+	</a>
+	{% if post.metadata.tags %}
+		{% for tag in post.metadata.tags %}
+			<span class="post-tag">{{ tag }}</span>
+		{% endfor %}
+	{% endif %}
+	{% if post.content %}
+	<a href="/blog/{{ post.id }}">
+		{{ post.content | safe }}
+		<div class="overlay"></div>
+		<div class="overlay-text"><h1>read article</h1></div>
+	</a>
+	{% endif %}
+	{% endblock content %}
+</div>
