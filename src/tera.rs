@@ -1,7 +1,7 @@
-use std::fs;
 use std::io;
-use std::path::PathBuf;
+use std::sync::Mutex;
 
+use redis::Commands;
 use rocket::State;
 
 use rocket_dyn_templates::{context, Template};
@@ -12,35 +12,44 @@ use crate::blog::{BlogPost, BlogPostMetadata};
 struct BlogPostView {
     id: String,
     content: String,
-    metadata: BlogPostMetadata
+    metadata: BlogPostMetadata,
 }
 
-// TODO: cow strings?
-// TODO: caching
-// TODO: use generics
-fn read_post(id: &String) -> io::Result<String> {
-    let base_path = PathBuf::from("./static/");
-    let html_file_path = base_path.join(id.clone() + ".html");
-    fs::read_to_string(html_file_path)
+pub struct SharedRedis {
+    pub connection: Mutex<redis::Connection>,
+}
+
+// TODO: Cow strings?
+fn read_post(id: &String, redis: &mut redis::Connection) -> io::Result<String> {
+    redis
+        .get(id)
+        .map_err(|e| io::Error::new(io::ErrorKind::Other, e))
 }
 
 #[get("/")]
-pub fn index(top_posts: &State<Vec<BlogPost>>) -> Template {
-
+pub fn index(blog_posts: &State<Vec<BlogPost>>, redis: &State<SharedRedis>) -> Template {
     let mut posts: Vec<BlogPostView> = vec![];
+    let mut redis_l = redis
+        .to_owned()
+        .connection
+        .lock()
+        .expect("lock shared data");
 
     // Sort by date and render top N posts
-    for v in top_posts.iter() {
-        if let Ok(raw_html) = read_post(&v.id) {
+    for v in blog_posts.iter() {
+        if let Ok(raw_html) = read_post(&v.id, &mut redis_l) {
             let mut post_html = String::new();
             post_html += &raw_html[0..500];
             post_html += "...";
             println!("{:?}", v.metadata);
-            posts.push(BlogPostView { id: v.id.clone(), content: post_html, metadata: v.metadata.clone() });
+            posts.push(BlogPostView {
+                id: v.id.clone(),
+                content: post_html,
+                metadata: v.metadata.clone(),
+            });
         } else {
             panic!("Error reading html file.");
         }
-
     }
     Template::render(
         "index",
@@ -51,8 +60,8 @@ pub fn index(top_posts: &State<Vec<BlogPost>>) -> Template {
 }
 
 #[get("/blog")]
-pub fn blog(top_posts: &State<Vec<BlogPost>>) -> Template {
-    let posts: Vec<&BlogPost> = top_posts.iter().collect();
+pub fn blog(blog_posts: &State<Vec<BlogPost>>) -> Template {
+    let posts: Vec<&BlogPost> = blog_posts.iter().collect();
     Template::render(
         "blog",
         context! {
@@ -62,21 +71,31 @@ pub fn blog(top_posts: &State<Vec<BlogPost>>) -> Template {
 }
 
 #[get("/blog/<post_id>")]
-// TODO: handle errors
-pub fn blog_posts(post_id: &str, top_posts: &State<Vec<BlogPost>>) -> Template {
-    // TODO: trivially now fails on unhandled static files eg. svg
-    let f_post = top_posts.iter().find(|post| post.id == post_id ).unwrap();
+pub fn blog_posts(
+    post_id: &str,
+    blog_posts: &State<Vec<BlogPost>>,
+    redis: &State<SharedRedis>,
+) -> Option<Template> {
+    let f_post = blog_posts.iter().find(|post| post.id == post_id)?;
+    let mut redis_l = redis
+        .to_owned()
+        .connection
+        .lock()
+        .expect("Couldn't aquire lock on redis connection.");
 
-    let content = read_post(&post_id.to_owned()).unwrap();
-    let post = BlogPostView{
-        id: String::from(post_id),
-        content,
-        metadata: f_post.metadata.clone()
-    };
-    Template::render(
-        "blog_post",
-        context! {
-           post: post,
-        },
-    )
+    if let Ok(content) = read_post(&post_id.to_owned(), &mut redis_l) {
+        let post = BlogPostView {
+            id: String::from(post_id),
+            content,
+            metadata: f_post.metadata.clone(),
+        };
+        Some(Template::render(
+            "blog_post",
+            context! {
+               post: post,
+            },
+        ))
+    } else {
+        None
+    }
 }

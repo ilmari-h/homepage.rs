@@ -6,11 +6,20 @@
     <title>{% block title %}{% endblock title %} - My Webpage</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
     {% endblock head %}
+
 </head>
 <body>
 	<div class="navbar">
 		<a href="/"><h1><strong>ilmari</strong>.dev</h1></a>
-		<div>
+		<div class="desktop-links">
+			<a href="/blog">Blog</a>
+			<a>Publications</a>
+			<a>GitHub</a>
+			<a>LinkedIn</a>
+		</div>
+		<input id="m-menu" type="checkbox" class="mobile-menu-toggle-input">
+		<label for="m-menu" class="mobile-menu-toggle"><div></div></label>
+		<div class="mobile-links">
 			<a href="/blog">Blog</a>
 			<a>Publications</a>
 			<a>GitHub</a>

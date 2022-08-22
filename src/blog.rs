@@ -1,7 +1,9 @@
 use std::fs;
 use std::io;
 use std::io::{stdout, Error, ErrorKind, Write};
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
+
+use redis::Commands;
 
 use pulldown_cmark::{html, CodeBlockKind, CowStr, Event, Options, Parser, Tag};
 use serde::Deserialize;
@@ -10,19 +12,22 @@ use syntect::highlighting::ThemeSet;
 use syntect::html::highlighted_html_for_string;
 use syntect::parsing::SyntaxSet;
 
-pub fn render_blog_posts(path_src: &str, path_out: &str) -> io::Result<Vec<BlogPost>> {
+pub fn render_blog_posts(
+    path_src: &str,
+    conn: &mut redis::Connection,
+) -> io::Result<Vec<BlogPost>> {
     let files = read_markdown_sync(path_src)?; // TODO run concurrently
-    let metadata = read_metadata_sync(path_src)?;// run concurrently
+    let metadata = read_metadata_sync(path_src)?; // run concurrently
     writeln!(stdout(), "Found {} posts\n", files.len())?;
     for (p, f) in files {
-        if let Some(new_fname) = p
-            .file_name()
-            .and_then(|os_fname| os_fname.to_str().and_then(|fname| fname.strip_suffix("md")))
-        {
-            fs::write(
-                Path::new(path_out).join(String::from(new_fname) + "html"),
-                f,
-            )?;
+        if let Some(post_id) = p.file_name().and_then(|os_fname| {
+            os_fname
+                .to_str()
+                .and_then(|fname| fname.strip_suffix(".md"))
+        }) {
+            let _: () = conn
+                .set(post_id, f)
+                .map_err(|e| Error::new(ErrorKind::Other, e))?;
         } else {
             return Err(Error::new(
                 ErrorKind::Other,
@@ -33,7 +38,7 @@ pub fn render_blog_posts(path_src: &str, path_out: &str) -> io::Result<Vec<BlogP
     Ok(metadata)
 }
 
-#[derive(Debug, Deserialize, Serialize,Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct BlogPostMetadata {
     pub title: String,
     pub date_created: String,
@@ -41,7 +46,7 @@ pub struct BlogPostMetadata {
     pub date_edited: Option<String>,
 }
 
-#[derive(Debug,Serialize)]
+#[derive(Debug, Serialize)]
 pub struct BlogPost {
     pub id: String,
     pub metadata: BlogPostMetadata,
@@ -54,8 +59,15 @@ pub fn read_metadata_sync(path: &str) -> io::Result<Vec<BlogPost>> {
             if let Ok(entry) = de {
                 let path = entry.path();
                 if path.extension()?.eq("toml") {
-                    let id = path.file_name().unwrap().to_str().unwrap().strip_suffix(".toml").unwrap();
-                    return fs::read_to_string(&path).map_or_else(|_| None, |f| Some((f, String::from(id))));
+                    let id = path
+                        .file_name()
+                        .unwrap()
+                        .to_str()
+                        .unwrap()
+                        .strip_suffix(".toml")
+                        .unwrap();
+                    return fs::read_to_string(&path)
+                        .map_or_else(|_| None, |f| Some((f, String::from(id))));
                 }
             }
             None

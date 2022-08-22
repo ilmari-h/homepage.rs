@@ -1,18 +1,26 @@
 #[macro_use]
 extern crate rocket;
-use rocket::fs::{FileServer, relative};
+use rocket::fs::{relative, FileServer};
+use std::sync::Mutex;
+use tera::SharedRedis;
 
 mod blog;
 mod tera;
 
-use std::process;
 use std::env;
+use std::process;
 
 use rocket_dyn_templates::Template;
 
 #[launch]
 async fn rocket() -> _ {
-    let blog_posts_render = blog::render_blog_posts("./blog", "./static");
+    let redis_client = redis::Client::open("redis://127.0.0.1/").unwrap();
+    let mut redis_conn = redis_client.get_connection().unwrap();
+
+    let blog_posts_render = blog::render_blog_posts("./blog", &mut redis_conn);
+    let shared_redis = SharedRedis {
+        connection: Mutex::new(redis_conn),
+    };
 
     match blog_posts_render {
         Err(e) => {
@@ -21,8 +29,9 @@ async fn rocket() -> _ {
         }
         Ok(blog_posts) => rocket::build()
             .manage(blog_posts)
+            .manage(shared_redis)
             .mount("/", routes![tera::index, tera::blog, tera::blog_posts])
             .mount("/", FileServer::from(relative!("static")))
-            .attach(Template::fairing())
+            .attach(Template::fairing()),
     }
 }

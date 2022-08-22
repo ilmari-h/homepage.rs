@@ -16,3 +16,5 @@ serde = "1.0"
 path = "../_lib_rocket/contrib/dyn_templates"
 features = ["tera"]
 
+[dependencies.redis]
+version = "*"
