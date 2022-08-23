@@ -1,5 +1,5 @@
-use std::io;
 use std::sync::Mutex;
+use std::{io, str::FromStr};
 
 use redis::Commands;
 use rocket::State;
@@ -35,13 +35,19 @@ pub fn index(blog_posts: &State<Vec<BlogPost>>, redis: &State<SharedRedis>) -> T
         .lock()
         .expect("lock shared data");
 
-    // Sort by date and render top N posts
-    for v in blog_posts.iter() {
+    // Posts are sorted by date by default. Pick 3 newest.
+    for v in blog_posts.iter().take(3) {
         if let Ok(raw_html) = read_post(&v.id, &mut redis_l) {
             let mut post_html = String::new();
+
+            // Cut the post short on index page.
             post_html += &raw_html[0..500];
-            post_html += "...";
-            println!("{:?}", v.metadata);
+
+            // Cut to the last complete word.
+            while post_html.chars().last().unwrap_or(' ') != ' ' {
+                post_html.pop();
+            }
+
             posts.push(BlogPostView {
                 id: v.id.clone(),
                 content: post_html,

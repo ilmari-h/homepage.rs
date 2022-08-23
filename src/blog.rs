@@ -5,6 +5,7 @@ use std::path::PathBuf;
 
 use redis::Commands;
 
+use chrono::NaiveDate;
 use pulldown_cmark::{html, CodeBlockKind, CowStr, Event, Options, Parser, Tag};
 use serde::Deserialize;
 use serde::Serialize;
@@ -59,13 +60,7 @@ pub fn read_metadata_sync(path: &str) -> io::Result<Vec<BlogPost>> {
             if let Ok(entry) = de {
                 let path = entry.path();
                 if path.extension()?.eq("toml") {
-                    let id = path
-                        .file_name()
-                        .unwrap()
-                        .to_str()
-                        .unwrap()
-                        .strip_suffix(".toml")
-                        .unwrap();
+                    let id = path.file_name()?.to_str()?.strip_suffix(".toml")?;
                     return fs::read_to_string(&path)
                         .map_or_else(|_| None, |f| Some((f, String::from(id))));
                 }
@@ -77,7 +72,17 @@ pub fn read_metadata_sync(path: &str) -> io::Result<Vec<BlogPost>> {
         })
         .collect();
     match res {
-        Ok(valid_res) => Ok(valid_res),
+        Ok(mut valid_res) => {
+            // Sort posts by date.
+            valid_res.sort_by(|a, b| {
+                let ad = NaiveDate::parse_from_str(&a.metadata.date_created, "%Y-%m-%d")
+                    .expect("Error parsing date from post metadata.");
+                let bd = NaiveDate::parse_from_str(&b.metadata.date_created, "%Y-%m-%d")
+                    .expect("Error parsing date from post metadata.");
+                ad.cmp(&bd)
+            });
+            Ok(valid_res)
+        }
         Err(e) => Err(io::Error::new(ErrorKind::Other, e)),
     }
 }

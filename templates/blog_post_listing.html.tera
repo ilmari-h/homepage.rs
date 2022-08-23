@@ -3,7 +3,7 @@
 	<a href="/blog/{{ post.id }}">
 		<div class="post-header-line">
 			<h1>{{ post.metadata.title }}</h1>
-			<div class="post-date">{{ post.metadata.date_created }}</div>
+			<div class="post-date">{{ post.metadata.date_created | date(format="%B %e %Y") }}</div>
 		</div>
 	</a>
 	{% if post.metadata.tags %}
@@ -12,11 +12,12 @@
 		{% endfor %}
 	{% endif %}
 	{% if post.content %}
-	<a href="/blog/{{ post.id }}">
+	<!--<a href="/blog/{{ post.id }}">
 		{{ post.content | safe }}
 		<div class="overlay"></div>
 		<div class="overlay-text"><h1>read article</h1></div>
-	</a>
+	</a>-->
+	{{ post.content | trim_end | safe }}... <a class="blog-post-link" href="/blog/{{ post.id }}">Full post</a>
 	{% endif %}
 	{% endblock content %}
 </div>
