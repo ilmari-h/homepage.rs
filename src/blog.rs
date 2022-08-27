@@ -16,9 +16,17 @@ use syntect::parsing::SyntaxSet;
 pub fn render_blog_posts(
     path_src: &str,
     conn: &mut redis::Connection,
-) -> io::Result<Vec<BlogPost>> {
+) -> io::Result<(Vec<BlogPost>, Vec<String>)> {
     let files = read_markdown_sync(path_src)?; // TODO run concurrently
     let metadata = read_metadata_sync(path_src)?; // run concurrently
+    let mut tags: Vec<String> = metadata
+        .iter()
+        .filter_map(|md| md.metadata.tags.clone())
+        .flatten()
+        .collect();
+    tags.sort();
+    tags.dedup(); // Remove duplicates.
+
     writeln!(stdout(), "Found {} posts\n", files.len())?;
     for (p, f) in files {
         if let Some(post_id) = p.file_name().and_then(|os_fname| {
@@ -36,7 +44,7 @@ pub fn render_blog_posts(
             ));
         }
     }
-    Ok(metadata)
+    Ok((metadata, tags))
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -79,7 +87,7 @@ pub fn read_metadata_sync(path: &str) -> io::Result<Vec<BlogPost>> {
                     .expect("Error parsing date from post metadata.");
                 let bd = NaiveDate::parse_from_str(&b.metadata.date_created, "%Y-%m-%d")
                     .expect("Error parsing date from post metadata.");
-                ad.cmp(&bd)
+                bd.cmp(&ad)
             });
             Ok(valid_res)
         }

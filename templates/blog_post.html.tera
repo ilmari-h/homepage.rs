@@ -12,6 +12,9 @@
 
 {{ post.content | safe }}
 
+<br>
+<br>
+
 </div>
 
 {% endblock content %}

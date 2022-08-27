@@ -1,5 +1,5 @@
+use std::io;
 use std::sync::Mutex;
-use std::{io, str::FromStr};
 
 use redis::Commands;
 use rocket::State;
@@ -13,6 +13,12 @@ struct BlogPostView {
     id: String,
     content: String,
     metadata: BlogPostMetadata,
+}
+
+#[derive(Debug, Serialize)]
+struct TagView<'a> {
+    tag: &'a String,
+    selected: bool,
 }
 
 pub struct SharedRedis {
@@ -65,13 +71,45 @@ pub fn index(blog_posts: &State<Vec<BlogPost>>, redis: &State<SharedRedis>) -> T
     )
 }
 
-#[get("/blog")]
-pub fn blog(blog_posts: &State<Vec<BlogPost>>) -> Template {
+#[get("/blog?<tags>")]
+pub fn blog(
+    tags: Option<String>,
+    blog_posts: &State<Vec<BlogPost>>,
+    blog_tags: &State<Vec<String>>,
+) -> Template {
+    let mut s_tags: Vec<String> = vec![];
+    if let Some(have_tags) = tags {
+        s_tags = have_tags.split(' ').map(|s| String::from(s)).collect()
+    }
     let posts: Vec<&BlogPost> = blog_posts.iter().collect();
+    let tags: Vec<TagView> = blog_tags
+        .iter()
+        .map(|tag| TagView {
+            tag,
+            selected: s_tags.iter().find(|st| *st == tag).is_some(),
+        })
+        .collect();
+
+    let s_posts: Vec<_> = if s_tags.len() > 0 {
+        posts
+            .iter()
+            .filter(|p| {
+                if let Some(tags) = &p.metadata.tags {
+                    tags.iter().any(|at| s_tags.contains(at))
+                } else {
+                    false // No tags, can't be a match.
+                }
+            })
+            .collect()
+    } else {
+        posts.iter().map(|p| p).collect()
+    };
+
     Template::render(
         "blog",
         context! {
-            posts
+            posts: s_posts,
+            tags
         },
     )
 }

@@ -39,6 +39,7 @@
 
 	{% for post in posts %}
 		{% include "blog_post_listing" %}
+		<div class="break"></div>
 	{% endfor %}
 
 {% endblock content %}

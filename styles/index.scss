@@ -107,8 +107,11 @@ p {
   //  }
   //}
 
-  .blog-post-link::after {
-    content: " ->";
+  .blog-post-link {
+    white-space: nowrap;
+    &::after {
+      content: " ->";
+    }
   }
 }
 @mixin element-color($color) {
@@ -153,6 +156,7 @@ p {
     border: 1px solid $subtle;
   }
   pre {
+    tab-size: 4;
     background-color: black !important;
     line-height: 1.15em;
     padding: 2px;
@@ -171,6 +175,17 @@ p {
   .post-date {
     margin-left: 10px;
     color: $paragraph;
+    white-space: nowrap;
+  }
+}
+.post-tag-list {
+  margin-bottom: 50px;
+  line-height: 1.5em;
+  .label {
+    margin-right: 5px;
+  }
+  a {
+    text-decoration: none;
   }
 }
 .post-tag {
@@ -178,6 +193,18 @@ p {
   font-size: 0.8em;
   background: $accent-dim;
   border-radius: 9px;
+  white-space: nowrap;
+  &-btn {
+    margin-right: 4px;
+    cursor: pointer;
+  }
+  &-selected {
+    background: black;
+    outline: 1px solid $accent;
+    &::after {
+      content: " ×";
+    }
+  }
 }
 .post-break {
   margin-bottom: 10px;

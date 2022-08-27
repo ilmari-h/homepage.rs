@@ -2,7 +2,36 @@
 {% block title %}Blog{% endblock title %}
 {% block content %}
 	<p>Posts about various software development related topics.</p>
-	<p>Filter by tag:</p>
+	<div class="post-tag-list">
+		<span class="label">Filter by tag: </span>
+
+		{% for tagv in tags %}
+			{% if tagv.selected %}
+				<a
+					href="/blog"
+				>
+					<span
+						class="post-tag post-tag-btn post-tag-selected"
+					>
+						{{ tagv.tag }}
+					</span>
+				</a>
+			{% else %}
+				<a
+					href="/blog?tags={{tagv.tag}}"
+				>
+					<span
+						class="post-tag post-tag-btn"
+					>
+						{{ tagv.tag }}
+					</span>
+				</a>
+			{% endif %}
+		{% endfor %}
+	</div>
+
+	<div class="break"></div>
+
 	{% for post in posts %}
 		{% include "blog_post_listing" %}
 		<div class="post-break"></div>
