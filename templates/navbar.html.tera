@@ -1,0 +1,15 @@
+<div class="navbar">
+	<a href="/"><h1><strong>ilmari</strong>.dev</h1></a>
+	<div class="desktop-links">
+		{% for link in cfg.navbar_links %}
+			<a href="{{link.url}}">{{link.title}}</a>
+		{% endfor %}
+	</div>
+	<input id="m-menu" type="checkbox" class="mobile-menu-toggle-input">
+	<label for="m-menu" class="mobile-menu-toggle"><div></div></label>
+	<div class="mobile-links">
+		{% for link in cfg.navbar_links %}
+			<a href="{{link.url}}">{{link.title}}</a>
+		{% endfor %}
+	</div>
+</div>

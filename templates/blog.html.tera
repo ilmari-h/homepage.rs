@@ -1,8 +1,15 @@
 {% extends "base" %}
-{% block title %}Blog{% endblock title %}
+{% block head %}
+    {{ super() }}
+	<script src="/blog_tags.js"></script>
+{% endblock head %}
+{% block navbar %}
+	{% include "navbar" %}
+{% endblock navbar %}
+{% block title %}Blog posts{% endblock title %}
 {% block content %}
 	<p>Posts about various software development related topics.</p>
-	<div class="post-tag-list">
+	<div id="post-tags" class="post-tag-list">
 		<span class="label">Filter by tag: </span>
 
 		{% for tagv in tags %}

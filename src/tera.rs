@@ -1,13 +1,14 @@
-use std::io;
 use std::sync::Mutex;
+use std::{cmp::Ordering, io};
 
 use redis::Commands;
 use rocket::State;
 
+use crate::blog::{BlogPost, BlogPostMetadata};
+use crate::config;
 use rocket_dyn_templates::{context, Template};
 use serde::Serialize;
 
-use crate::blog::{BlogPost, BlogPostMetadata};
 #[derive(Debug, Serialize)]
 struct BlogPostView {
     id: String,
@@ -19,6 +20,11 @@ struct BlogPostView {
 struct TagView<'a> {
     tag: &'a String,
     selected: bool,
+}
+
+#[derive(Debug, Serialize)]
+struct NavConfig<'a> {
+    navbar_links: &'a Vec<config::NavBarLink>,
 }
 
 pub struct SharedRedis {
@@ -33,7 +39,11 @@ fn read_post(id: &String, redis: &mut redis::Connection) -> io::Result<String> {
 }
 
 #[get("/")]
-pub fn index(blog_posts: &State<Vec<BlogPost>>, redis: &State<SharedRedis>) -> Template {
+pub fn index(
+    blog_posts: &State<Vec<BlogPost>>,
+    redis: &State<SharedRedis>,
+    cfg: &State<config::IndexPage>,
+) -> Template {
     let mut posts: Vec<BlogPostView> = vec![];
     let mut redis_l = redis
         .to_owned()
@@ -67,6 +77,7 @@ pub fn index(blog_posts: &State<Vec<BlogPost>>, redis: &State<SharedRedis>) -> T
         "index",
         context! {
             posts: posts,
+            cfg: cfg.inner()
         },
     )
 }
@@ -76,21 +87,31 @@ pub fn blog(
     tags: Option<String>,
     blog_posts: &State<Vec<BlogPost>>,
     blog_tags: &State<Vec<String>>,
+    cfg: &State<config::IndexPage>,
 ) -> Template {
     let mut s_tags: Vec<String> = vec![];
     if let Some(have_tags) = tags {
         s_tags = have_tags.split(' ').map(|s| String::from(s)).collect()
     }
     let posts: Vec<&BlogPost> = blog_posts.iter().collect();
-    let tags: Vec<TagView> = blog_tags
+    let mut tags: Vec<TagView> = blog_tags
         .iter()
         .map(|tag| TagView {
             tag,
             selected: s_tags.iter().find(|st| *st == tag).is_some(),
         })
         .collect();
+    tags.sort_by(|ta, tb| {
+        if ta.selected {
+            Ordering::Less
+        } else if tb.selected {
+            Ordering::Greater
+        } else {
+            ta.tag.to_lowercase().cmp(&tb.tag.to_lowercase())
+        }
+    });
 
-    let s_posts: Vec<_> = if s_tags.len() > 0 {
+    let s_posts: Vec<&BlogPost> = if s_tags.len() > 0 {
         posts
             .iter()
             .filter(|p| {
@@ -100,15 +121,17 @@ pub fn blog(
                     false // No tags, can't be a match.
                 }
             })
+            .map(|p| *p)
             .collect()
     } else {
-        posts.iter().map(|p| p).collect()
+        posts
     };
 
     Template::render(
         "blog",
         context! {
             posts: s_posts,
+            cfg: NavConfig{ navbar_links: &cfg.navbar_links},
             tags
         },
     )
@@ -119,6 +142,7 @@ pub fn blog_posts(
     post_id: &str,
     blog_posts: &State<Vec<BlogPost>>,
     redis: &State<SharedRedis>,
+    cfg: &State<config::IndexPage>,
 ) -> Option<Template> {
     let f_post = blog_posts.iter().find(|post| post.id == post_id)?;
     let mut redis_l = redis
@@ -137,6 +161,7 @@ pub fn blog_posts(
             "blog_post",
             context! {
                post: post,
+                cfg: NavConfig{ navbar_links: &cfg.navbar_links},
             },
         ))
     } else {

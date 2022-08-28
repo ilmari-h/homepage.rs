@@ -3,6 +3,9 @@
     {{ super() }}
 	<script src="/blog.js"></script>
 {% endblock head %}
+{% block navbar %}
+	{% include "navbar" %}
+{% endblock navbar %}
 {% block title %}{{ post.metadata.title }}{% endblock title %}
 {% block content %}
 

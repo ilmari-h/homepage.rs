@@ -1,10 +1,12 @@
 #[macro_use]
 extern crate rocket;
 use rocket::fs::{relative, FileServer};
+use std::path::PathBuf;
 use std::sync::Mutex;
 use tera::SharedRedis;
 
 mod blog;
+mod config;
 mod tera;
 
 use std::env;
@@ -21,6 +23,7 @@ async fn rocket() -> _ {
     let shared_redis = SharedRedis {
         connection: Mutex::new(redis_conn),
     };
+    let index_cfg: config::IndexPage = config::read_config(PathBuf::from("./Config.toml")).unwrap();
 
     match blog_posts_result {
         Err(e) => {
@@ -30,6 +33,7 @@ async fn rocket() -> _ {
         Ok((blog_posts, tags)) => rocket::build()
             .manage(blog_posts)
             .manage(shared_redis)
+            .manage(index_cfg)
             .manage(tags)
             .mount("/", routes![tera::index, tera::blog, tera::blog_posts])
             .mount("/", FileServer::from(relative!("static")))

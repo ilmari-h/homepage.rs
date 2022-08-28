@@ -31,6 +31,7 @@ h8 {
 }
 a {
   color: $primary;
+  text-decoration: none;
 }
 p {
   color: $paragraph;
@@ -39,6 +40,11 @@ p {
 
 #content {
   margin-top: 40px;
+  p {
+    a {
+      border-bottom: 1px solid $paragraph;
+    }
+  }
 }
 #footer {
   position: absolute;
