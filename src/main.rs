@@ -35,7 +35,15 @@ async fn rocket() -> _ {
             .manage(shared_redis)
             .manage(index_cfg)
             .manage(tags)
-            .mount("/", routes![tera::index, tera::blog, tera::blog_posts])
+            .mount(
+                "/",
+                routes![
+                    tera::index,
+                    tera::blog,
+                    tera::blog_posts,
+                    tera::publications
+                ],
+            )
             .mount("/", FileServer::from(relative!("static")))
             .attach(Template::fairing()),
     }

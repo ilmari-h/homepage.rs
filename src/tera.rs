@@ -168,3 +168,13 @@ pub fn blog_posts(
         None
     }
 }
+
+#[get("/publications")]
+pub fn publications(cfg: &State<config::IndexPage>) -> Template {
+    Template::render(
+        "publications",
+        context! {
+            cfg: cfg.inner()
+        },
+    )
+}

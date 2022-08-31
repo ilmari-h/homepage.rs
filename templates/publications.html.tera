@@ -1,0 +1,9 @@
+{% extends "base" %}
+{% block navbar %}
+	{% include "navbar" %}
+{% endblock navbar %}
+{% block title %}Publications{% endblock title %}
+{% block content %}
+	<p>{{ cfg.publications_html }}</p>
+	<br>
+{% endblock content %}

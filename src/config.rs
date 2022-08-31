@@ -24,6 +24,7 @@ pub struct NavBarLink {
 pub struct IndexPage {
     pub navbar_links: Vec<NavBarLink>,
     pub brief_html: String,
+    pub publications_html: String,
     pub projects: Vec<Project>,
 }
 
