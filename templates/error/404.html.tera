@@ -1,11 +1,8 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <title>404 - tera</title>
-  </head>
-  <body>
-    <h1>404: Hey! There's nothing here.</h1>
-    The page at {{ uri }} does not exist!
-  </body>
-</html>
+{% extends "base" %}
+{% block title %}Error{% endblock title %}
+{% block content %}
+<div style="text-align:center;">
+<h1>404 - Not found.</h1>
+<p>The page does not exist! <a href="/">Go back.</a></p>
+</div>
+{% endblock content %}

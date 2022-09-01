@@ -178,3 +178,8 @@ pub fn publications(cfg: &State<config::IndexPage>) -> Template {
         },
     )
 }
+
+#[catch(404)]
+pub fn not_found() -> Template {
+    Template::render("error/404", context! {})
+}

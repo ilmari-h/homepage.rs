@@ -45,6 +45,7 @@ async fn rocket() -> _ {
                 ],
             )
             .mount("/", FileServer::from(relative!("static")))
+            .register("/", catchers![tera::not_found])
             .attach(Template::fairing()),
     }
 }
