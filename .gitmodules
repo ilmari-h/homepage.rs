@@ -1,0 +1,3 @@
+[submodule "blog"]
+	path = blog
+	url = git@github.com:ilmari-h/dev-blog.git
