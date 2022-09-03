@@ -16,7 +16,11 @@ use rocket_dyn_templates::Template;
 
 #[launch]
 async fn rocket() -> _ {
-    let redis_client = redis::Client::open("redis://127.0.0.1/").unwrap();
+    let redis_port = env::var("REDIS_PORT").unwrap_or(String::from("6379"));
+    let redis_host = env::var("REDIS_HOST_NAME").unwrap_or(String::from("127.0.0.1"));
+    let redis_client = redis::Client::open(format!("redis://{}:{}", redis_host, redis_port))
+        .expect("could not connect redis client");
+
     let mut redis_conn = redis_client.get_connection().unwrap();
 
     let blog_posts_result = blog::render_blog_posts("./blog", &mut redis_conn);

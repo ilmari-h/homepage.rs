@@ -1,0 +1,21 @@
+version: "3"
+services:
+  homepage:
+    build: .
+    env_file:
+      - .env
+    ports:
+      - "${HOMEPAGE_PORT}:${HOMEPAGE_PORT}"
+    networks:
+      - homepage-network
+  redis:
+    image: redis:latest
+    container_name: ${REDIS_HOST_NAME}
+    ports:
+      - "6379:6379"
+    networks:
+      - homepage-network
+networks:
+  homepage-network:
+    driver: bridge
+
