@@ -5,7 +5,7 @@ services:
     env_file:
       - .env
     ports:
-      - "${HOMEPAGE_PORT}:${HOMEPAGE_PORT}"
+      - "${ROCKET_PORT}:${ROCKET_PORT}"
     networks:
       - homepage-network
   redis:
