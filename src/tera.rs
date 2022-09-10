@@ -1,7 +1,7 @@
+use std::cmp::Ordering;
+use std::collections::HashMap;
 use std::sync::Mutex;
-use std::{cmp::Ordering, io};
 
-use redis::Commands;
 use rocket::http::Status;
 use rocket::response::status;
 use rocket::State;
@@ -29,33 +29,18 @@ struct NavConfig<'a> {
     navbar_links: &'a Vec<config::NavBarLink>,
 }
 
-pub struct SharedRedis {
-    pub connection: Mutex<redis::Connection>,
-}
-
-// TODO: Cow strings?
-fn read_post(id: &String, redis: &mut redis::Connection) -> io::Result<String> {
-    redis
-        .get(id)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, e))
-}
-
 #[get("/")]
 pub fn index(
     blog_posts: &State<Vec<BlogPost>>,
-    redis: &State<SharedRedis>,
+    mtx_render_mem: &State<Mutex<HashMap<String, String>>>,
     cfg: &State<config::IndexPage>,
 ) -> Result<Template, status::Custom<String>> {
     let mut posts: Vec<BlogPostView> = vec![];
-    let mut redis_l = redis
-        .to_owned()
-        .connection
-        .lock()
-        .expect("lock shared data");
+    let render_mem = mtx_render_mem.lock().expect("lock shared data");
 
     // Posts are sorted by date by default. Pick 3 newest.
     for v in blog_posts.iter().take(3) {
-        if let Ok(raw_html) = read_post(&v.id, &mut redis_l) {
+        if let Some(raw_html) = render_mem.get(&v.id) {
             let mut post_html = String::new();
 
             // Cut the post short on index page.
@@ -146,20 +131,18 @@ pub fn blog(
 pub fn blog_posts(
     post_id: &str,
     blog_posts: &State<Vec<BlogPost>>,
-    redis: &State<SharedRedis>,
+    mtx_render_mem: &State<Mutex<HashMap<String, String>>>,
     cfg: &State<config::IndexPage>,
 ) -> Option<Template> {
     let f_post = blog_posts.iter().find(|post| post.id == post_id)?;
-    let mut redis_l = redis
-        .to_owned()
-        .connection
+    let render_mem = mtx_render_mem
         .lock()
-        .expect("Couldn't aquire lock on redis connection.");
+        .expect("Couldn't aquire lock while rendering block post.");
 
-    if let Ok(content) = read_post(&post_id.to_owned(), &mut redis_l) {
+    if let Some(content) = render_mem.get(post_id) {
         let post = BlogPostView {
             id: String::from(post_id),
-            content,
+            content: content.to_string(),
             metadata: f_post.metadata.clone(),
         };
         Some(Template::render(

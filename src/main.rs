@@ -3,7 +3,6 @@ extern crate rocket;
 use rocket::fs::{relative, FileServer};
 use std::path::PathBuf;
 use std::sync::Mutex;
-use tera::SharedRedis;
 
 mod blog;
 mod config;
@@ -16,17 +15,7 @@ use rocket_dyn_templates::Template;
 
 #[launch]
 async fn rocket() -> _ {
-    let redis_port = env::var("REDIS_PORT").unwrap_or_else(|_| String::from("6379"));
-    let redis_host = env::var("REDIS_HOST_NAME").unwrap_or_else(|_| String::from("127.0.0.1"));
-    let redis_client = redis::Client::open(format!("redis://{}:{}", redis_host, redis_port))
-        .expect("could not connect redis client");
-
-    let mut redis_conn = redis_client.get_connection().unwrap();
-
-    let blog_posts_result = blog::render_blog_posts("./blog", &mut redis_conn);
-    let shared_redis = SharedRedis {
-        connection: Mutex::new(redis_conn),
-    };
+    let blog_posts_result = blog::render_blog_posts("./blog");
     let index_cfg: config::IndexPage = config::read_config(PathBuf::from("./Config.toml")).unwrap();
 
     match blog_posts_result {
@@ -34,9 +23,9 @@ async fn rocket() -> _ {
             eprintln!("Error rendering blog pages: {}", e);
             process::exit(1)
         }
-        Ok((blog_posts, tags)) => rocket::build()
+        Ok((blog_posts, tags, render_mem)) => rocket::build()
             .manage(blog_posts)
-            .manage(shared_redis)
+            .manage(Mutex::new(render_mem))
             .manage(index_cfg)
             .manage(tags)
             .mount(

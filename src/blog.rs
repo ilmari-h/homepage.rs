@@ -1,9 +1,8 @@
+use std::collections::HashMap;
 use std::fs;
 use std::io;
 use std::io::{stdout, Error, ErrorKind, Write};
 use std::path::PathBuf;
-
-use redis::Commands;
 
 use chrono::NaiveDate;
 use pulldown_cmark::{html, CodeBlockKind, CowStr, Event, Options, Parser, Tag};
@@ -15,10 +14,10 @@ use syntect::parsing::SyntaxSet;
 
 pub fn render_blog_posts(
     path_src: &str,
-    conn: &mut redis::Connection,
-) -> io::Result<(Vec<BlogPost>, Vec<String>)> {
+) -> io::Result<(Vec<BlogPost>, Vec<String>, HashMap<String, String>)> {
     let files = read_markdown_sync(path_src)?; // TODO run concurrently
     let metadata = read_metadata_sync(path_src)?; // run concurrently
+    let mut render_mem: HashMap<String, String> = HashMap::new();
     let mut tags: Vec<String> = metadata
         .iter()
         .filter_map(|md| md.metadata.tags.clone())
@@ -34,9 +33,7 @@ pub fn render_blog_posts(
                 .to_str()
                 .and_then(|fname| fname.strip_suffix(".md"))
         }) {
-            conn
-                .set_ex(post_id, f, 9999999)
-                .map_err(|e| Error::new(ErrorKind::Other, e))?;
+            render_mem.insert(post_id.to_string(), f);
         } else {
             return Err(Error::new(
                 ErrorKind::Other,
@@ -44,7 +41,7 @@ pub fn render_blog_posts(
             ));
         }
     }
-    Ok((metadata, tags))
+    Ok((metadata, tags, render_mem))
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
