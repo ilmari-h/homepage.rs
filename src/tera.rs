@@ -3,6 +3,8 @@ use std::{cmp::Ordering, io};
 
 use redis::Commands;
 use rocket::State;
+use rocket::http::Status;
+use rocket::response::status;
 
 use crate::blog::{BlogPost, BlogPostMetadata};
 use crate::config;
@@ -43,7 +45,7 @@ pub fn index(
     blog_posts: &State<Vec<BlogPost>>,
     redis: &State<SharedRedis>,
     cfg: &State<config::IndexPage>,
-) -> Template {
+) -> Result<Template, status::Custom<String>> {
     let mut posts: Vec<BlogPostView> = vec![];
     let mut redis_l = redis
         .to_owned()
@@ -70,16 +72,16 @@ pub fn index(
                 metadata: v.metadata.clone(),
             });
         } else {
-            panic!("Error reading html file.");
+            return Err(status::Custom( Status::InternalServerError,"Error reading html file.".to_string()))
         }
     }
-    Template::render(
+    Ok(Template::render(
         "index",
         context! {
             posts: posts,
             cfg: cfg.inner()
         },
-    )
+    ))
 }
 
 #[get("/blog?<tags>")]
@@ -91,14 +93,14 @@ pub fn blog(
 ) -> Template {
     let mut s_tags: Vec<String> = vec![];
     if let Some(have_tags) = tags {
-        s_tags = have_tags.split(' ').map(|s| String::from(s)).collect()
+        s_tags = have_tags.split(' ').map(String::from).collect()
     }
     let posts: Vec<&BlogPost> = blog_posts.iter().collect();
     let mut tags: Vec<TagView> = blog_tags
         .iter()
         .map(|tag| TagView {
             tag,
-            selected: s_tags.iter().find(|st| *st == tag).is_some(),
+            selected: s_tags.iter().any(|st| st == tag),
         })
         .collect();
     tags.sort_by(|ta, tb| {
@@ -111,7 +113,7 @@ pub fn blog(
         }
     });
 
-    let s_posts: Vec<&BlogPost> = if s_tags.len() > 0 {
+    let s_posts: Vec<&BlogPost> = if !s_tags.is_empty() {
         posts
             .iter()
             .filter(|p| {
@@ -120,8 +122,7 @@ pub fn blog(
                 } else {
                     false // No tags, can't be a match.
                 }
-            })
-            .map(|p| *p)
+            }).copied()
             .collect()
     } else {
         posts

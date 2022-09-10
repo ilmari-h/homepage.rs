@@ -34,7 +34,7 @@ pub fn render_blog_posts(
                 .to_str()
                 .and_then(|fname| fname.strip_suffix(".md"))
         }) {
-            let _: () = conn
+            conn
                 .set(post_id, f)
                 .map_err(|e| Error::new(ErrorKind::Other, e))?;
         } else {
@@ -132,7 +132,7 @@ pub fn read_markdown_sync(path: &str) -> io::Result<Vec<(PathBuf, String)>> {
                             if !c.is_empty() {
                                 syntax = ss
                                     .find_syntax_by_extension(&c)
-                                    .unwrap_or(ss.find_syntax_plain_text());
+                                    .unwrap_or_else(|| ss.find_syntax_plain_text());
                             }
                         }
                         in_code_block = true;
@@ -141,7 +141,7 @@ pub fn read_markdown_sync(path: &str) -> io::Result<Vec<(PathBuf, String)>> {
                         if in_code_block {
                             // Format the whole multi-line code block as HTML all at once
                             let html =
-                                highlighted_html_for_string(&to_highlight, &ss, &syntax, &theme);
+                                highlighted_html_for_string(&to_highlight, &ss, syntax, theme);
                             if let Ok(str_html) = html {
                                 // And put it into the vector
                                 new_res.push(Event::Html(CowStr::from(str_html)));

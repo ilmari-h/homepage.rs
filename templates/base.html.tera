@@ -3,6 +3,7 @@
 <head>
     {% block head %}
     <link rel="stylesheet" href="/index.css" />
+	<link rel="icon" type="image/x-icon" href="/favicon.svg">
     <title>{% block title %}{% endblock title %} - ilmari.dev</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
     {% endblock head %}

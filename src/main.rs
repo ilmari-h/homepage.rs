@@ -16,8 +16,8 @@ use rocket_dyn_templates::Template;
 
 #[launch]
 async fn rocket() -> _ {
-    let redis_port = env::var("REDIS_PORT").unwrap_or(String::from("6379"));
-    let redis_host = env::var("REDIS_HOST_NAME").unwrap_or(String::from("127.0.0.1"));
+    let redis_port = env::var("REDIS_PORT").unwrap_or_else(|_| String::from("6379"));
+    let redis_host = env::var("REDIS_HOST_NAME").unwrap_or_else(|_| String::from("127.0.0.1"));
     let redis_client = redis::Client::open(format!("redis://{}:{}", redis_host, redis_port))
         .expect("could not connect redis client");
 
