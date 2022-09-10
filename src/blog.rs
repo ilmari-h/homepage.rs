@@ -34,7 +34,8 @@ pub fn render_blog_posts(
                 .to_str()
                 .and_then(|fname| fname.strip_suffix(".md"))
         }) {
-            conn.set_ex(post_id, f, usize::MAX)
+            conn
+                .set_ex(post_id, f, 9999999)
                 .map_err(|e| Error::new(ErrorKind::Other, e))?;
         } else {
             return Err(Error::new(
