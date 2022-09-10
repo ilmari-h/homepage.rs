@@ -34,8 +34,7 @@ pub fn render_blog_posts(
                 .to_str()
                 .and_then(|fname| fname.strip_suffix(".md"))
         }) {
-            conn
-                .set(post_id, f)
+            conn.set_ex(post_id, f, usize::MAX)
                 .map_err(|e| Error::new(ErrorKind::Other, e))?;
         } else {
             return Err(Error::new(
@@ -117,7 +116,7 @@ pub fn read_markdown_sync(path: &str) -> io::Result<Vec<(PathBuf, String)>> {
             // See: https://github.com/raphlinus/pulldown-cmark/issues/167
             let ss = SyntaxSet::load_defaults_newlines();
             let ts = ThemeSet::load_defaults();
-            let mut syntax = ss.find_syntax_by_extension("rs").unwrap();
+            let mut syntax = ss.find_syntax_by_extension("rs").unwrap(); // TODO: handle
             let theme = &ts.themes["base16-eighties.dark"];
 
             // Apply highlighting

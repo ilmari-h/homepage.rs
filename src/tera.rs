@@ -2,9 +2,9 @@ use std::sync::Mutex;
 use std::{cmp::Ordering, io};
 
 use redis::Commands;
-use rocket::State;
 use rocket::http::Status;
 use rocket::response::status;
+use rocket::State;
 
 use crate::blog::{BlogPost, BlogPostMetadata};
 use crate::config;
@@ -72,7 +72,10 @@ pub fn index(
                 metadata: v.metadata.clone(),
             });
         } else {
-            return Err(status::Custom( Status::InternalServerError,"Error reading html file.".to_string()))
+            return Err(status::Custom(
+                Status::InternalServerError,
+                "Error reading html file.".to_string(),
+            ));
         }
     }
     Ok(Template::render(
@@ -122,7 +125,8 @@ pub fn blog(
                 } else {
                     false // No tags, can't be a match.
                 }
-            }).copied()
+            })
+            .copied()
             .collect()
     } else {
         posts
