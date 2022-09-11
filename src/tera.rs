@@ -1,12 +1,10 @@
 use std::cmp::Ordering;
-use std::collections::HashMap;
-use std::sync::Mutex;
 
 use rocket::http::Status;
 use rocket::response::status;
 use rocket::State;
 
-use crate::blog::{BlogPost, BlogPostMetadata};
+use crate::blog::{BlogPost, BlogPostMetadata, PostCache};
 use crate::config;
 use rocket_dyn_templates::{context, Template};
 use serde::Serialize;
@@ -32,11 +30,10 @@ struct NavConfig<'a> {
 #[get("/")]
 pub fn index(
     blog_posts: &State<Vec<BlogPost>>,
-    mtx_render_mem: &State<Mutex<HashMap<String, String>>>,
+    render_mem: &State<PostCache>,
     cfg: &State<config::IndexPage>,
 ) -> Result<Template, status::Custom<String>> {
     let mut posts: Vec<BlogPostView> = vec![];
-    let render_mem = mtx_render_mem.lock().expect("lock shared data");
 
     // Posts are sorted by date by default. Pick 3 newest.
     for v in blog_posts.iter().take(3) {
@@ -131,13 +128,10 @@ pub fn blog(
 pub fn blog_posts(
     post_id: &str,
     blog_posts: &State<Vec<BlogPost>>,
-    mtx_render_mem: &State<Mutex<HashMap<String, String>>>,
+    render_mem: &State<PostCache>,
     cfg: &State<config::IndexPage>,
 ) -> Option<Template> {
     let f_post = blog_posts.iter().find(|post| post.id == post_id)?;
-    let render_mem = mtx_render_mem
-        .lock()
-        .expect("Couldn't aquire lock while rendering block post.");
 
     if let Some(content) = render_mem.get(post_id) {
         let post = BlogPostView {

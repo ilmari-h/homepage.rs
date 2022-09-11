@@ -2,7 +2,6 @@
 extern crate rocket;
 use rocket::fs::{relative, FileServer};
 use std::path::PathBuf;
-use std::sync::Mutex;
 
 mod blog;
 mod config;
@@ -25,7 +24,7 @@ async fn rocket() -> _ {
         }
         Ok((blog_posts, tags, render_mem)) => rocket::build()
             .manage(blog_posts)
-            .manage(Mutex::new(render_mem))
+            .manage(render_mem)
             .manage(index_cfg)
             .manage(tags)
             .mount(

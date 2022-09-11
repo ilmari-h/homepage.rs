@@ -12,9 +12,9 @@ use syntect::highlighting::ThemeSet;
 use syntect::html::highlighted_html_for_string;
 use syntect::parsing::SyntaxSet;
 
-pub fn render_blog_posts(
-    path_src: &str,
-) -> io::Result<(Vec<BlogPost>, Vec<String>, HashMap<String, String>)> {
+pub type PostCache = HashMap<String, String>;
+
+pub fn render_blog_posts(path_src: &str) -> io::Result<(Vec<BlogPost>, Vec<String>, PostCache)> {
     let files = read_markdown_sync(path_src)?; // TODO run concurrently
     let metadata = read_metadata_sync(path_src)?; // run concurrently
     let mut render_mem: HashMap<String, String> = HashMap::new();
